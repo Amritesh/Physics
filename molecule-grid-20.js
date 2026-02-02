@@ -4,7 +4,7 @@ import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 import { getRealProbabilityDensity } from './physics.js';
 import { getElectronConfiguration, elementSymbols, elementNames } from './atom-data.js';
 import { getMoleculeGeometry, molecules } from './molecule-data.js';
-import { createLabel } from './utils.js';
+import { createLabel, createDetectionSprite, sampleOrbitals } from './utils.js';
 
 // Time-based electron observation visualization for molecules
 const CONFIG = {
@@ -26,70 +26,8 @@ let detections = [];
 let moleculeConfigs = [];
 let lastDetectionTime = 0;
 
-function createDetectionSprite(color = '#ffdca8') {
-    const size = 128;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-    grad.addColorStop(0, color);
-    grad.addColorStop(0.3, color);
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,size,size);
-    const tex = new THREE.CanvasTexture(canvas);
-    const mat = new THREE.SpriteMaterial({ map: tex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-    const sprite = new THREE.Sprite(mat);
-    return sprite;
-}
-
-function sampleOrbitalsMolecule(Z, atomPositions, count = 1) {
-    // Sample electron positions from atomic orbitals, replicated at molecule atom positions
-    const orbitals = getElectronConfiguration(Z);
-    const samples = [];
-    
-    for (const orb of orbitals) {
-        let x = 0.5, y = 0.5, z = 0.5;
-        let currentProb = getRealProbabilityDensity(x, y, z, orb.n, orb.l, orb.m, orb.Zeff || 1);
-        const stepSize = (orb.n * 1.5) / (orb.Zeff || 1);
-
-        // Quick burn-in
-        for (let i = 0; i < 50; i++) {
-            const dx = (Math.random() - 0.5) * stepSize;
-            const dy = (Math.random() - 0.5) * stepSize;
-            const dz = (Math.random() - 0.5) * stepSize;
-            const nextX = x + dx, nextY = y + dy, nextZ = z + dz;
-            const nextProb = getRealProbabilityDensity(nextX, nextY, nextZ, orb.n, orb.l, orb.m, orb.Zeff || 1);
-            const ratio = currentProb === 0 ? 1 : nextProb / currentProb;
-            if (ratio >= 1 || Math.random() < ratio) {
-                x = nextX; y = nextY; z = nextZ; currentProb = nextProb;
-            }
-        }
-
-        // Sample 'count' positions, replicate across atoms
-        for (let i = 0; i < count; i++) {
-            const dx = (Math.random() - 0.5) * stepSize;
-            const dy = (Math.random() - 0.5) * stepSize;
-            const dz = (Math.random() - 0.5) * stepSize;
-            const nextX = x + dx, nextY = y + dy, nextZ = z + dz;
-            const nextProb = getRealProbabilityDensity(nextX, nextY, nextZ, orb.n, orb.l, orb.m, orb.Zeff || 1);
-            const ratio = currentProb === 0 ? 1 : nextProb / currentProb;
-            if (ratio >= 1 || Math.random() < ratio) {
-                x = nextX; y = nextY; z = nextZ; currentProb = nextProb;
-            }
-            
-            // Add sample at each atomic position in molecule
-            for (const atomPos of atomPositions) {
-                samples.push({ 
-                    pos: new THREE.Vector3(x + atomPos.x, y + atomPos.y, z + atomPos.z), 
-                    color: ORBITAL_COLORS[orb.l] || new THREE.Color(1,1,1) 
-                });
-            }
-        }
-    }
-    return samples;
-}
+// Use `createDetectionSprite` and `sampleOrbitals` from `utils.js`.
+// To get molecule samples, call `sampleOrbitals(Z, count)` and then add atomic offsets where needed.
 
 function init() {
     scene = new THREE.Scene();
@@ -135,9 +73,12 @@ function createMoleculesGrid() {
     }
 }
 
+const isMobile = window.innerWidth < 768;
+
 function spawnElectronObservation() {
     const t = window.APP_STATE?.timeScale ?? 0.5;
-    const obsPerSpawn = Math.max(1, Math.round(3 + 17 * t));
+    const densityFactor = isMobile ? 0.2 : 1.0;
+    const obsPerSpawn = Math.max(1, Math.round((3 + 17 * t) * densityFactor));
     const life = 0.1 + 4.5 * t;
     const baseSize = 5.5 + t * 3;
 
@@ -145,19 +86,21 @@ function spawnElectronObservation() {
     if (!(window.APP_STATE?.detectionEnabled ?? true)) return;
     
     const cfg = moleculeConfigs[Math.floor(Math.random() * moleculeConfigs.length)];
-    const samples = sampleOrbitalsMolecule(cfg.Z, cfg.atomPositions, obsPerSpawn);
-    
-    for (const sample of samples) {
-        const sprite = createDetectionSprite('#ffdca8');
-        sprite.scale.set(baseSize, baseSize, 1);
-        sprite.position.set(cfg.xPos + sample.pos.x, cfg.yPos + sample.pos.y, sample.pos.z);
-        sprite.userData = { 
-            start: performance.now() / 1000, 
-            life,
-            color: sample.color
-        };
-        scene.add(sprite);
-        detections.push(sprite);
+    const baseSamples = sampleOrbitals(cfg.Z, obsPerSpawn);
+
+    for (const base of baseSamples) {
+        for (const atomPos of cfg.atomPositions) {
+            const sprite = createDetectionSprite('#ffdca8');
+            sprite.scale.set(baseSize, baseSize, 1);
+            sprite.position.set(cfg.xPos + base.pos.x + atomPos.x, cfg.yPos + base.pos.y + atomPos.y, base.pos.z + atomPos.z);
+            sprite.userData = {
+                start: performance.now() / 1000,
+                life,
+                color: base.color
+            };
+            scene.add(sprite);
+            detections.push(sprite);
+        }
     }
 }
 

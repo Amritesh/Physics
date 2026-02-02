@@ -3,31 +3,261 @@ body {
     overflow: hidden;
     background-color: #000;
     color: white;
-    font-family: sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    width: 100vw;
+    height: 100vh;
 }
 
 canvas {
     display: block;
+    width: 100% !important;
+    height: 100% !important;
 }
 
+/* --- Info Panel (Title) --- */
 #info {
     position: absolute;
-    top: 10px;
+    top: 60px; /* Pushed down to avoid overlapping the new top nav */
     left: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 10px;
-    border-radius: 5px;
+    z-index: 50; /* Below nav but above canvas */
+    padding: 12px;
     pointer-events: none;
     user-select: none;
+    background: transparent; /* Cleaner look */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 #info h1 {
-    margin: 0;
-    font-size: 1.2rem;
+    margin: 0 0 4px 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #4af 0%, #7cf 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(74, 175, 255, 0.3);
 }
 
 #info p {
-    margin: 5px 0 0;
+    margin: 4px 0 0;
+    font-size: 0.95rem;
+    color: #ddd;
+    line-height: 1.4;
+}
+
+/* Hide the legacy links in #info as they are in the nav now */
+#info a {
+    display: none !important;
+}
+
+
+/* --- App Tabs / Navigation (Replaces tabs.js styles) --- */
+#app-tabs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(10, 10, 15, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 8px 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Navigation Links Container */
+#app-tabs > div:not(.controls):not(.scale-info) {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding-bottom: 2px; /* For scrollbar if needed */
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+}
+
+/* Navigation Links */
+#app-tabs a {
+    color: #9feaff;
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 6px;
     font-size: 0.9rem;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+#app-tabs a:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+#app-tabs a.active {
+    background: rgba(74, 175, 255, 0.2);
+    color: #fff;
+    font-weight: 500;
+    box-shadow: 0 0 10px rgba(74, 175, 255, 0.1);
+}
+
+/* Controls Container in Nav */
+#app-tabs .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#app-tabs label {
+    font-size: 0.85rem;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
     color: #ccc;
+}
+
+#app-tabs label:hover {
+    color: #fff;
+}
+
+#app-tabs input[type=checkbox] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #4af;
+}
+
+#app-tabs input[type=range] {
+    width: 80px;
+    cursor: pointer;
+}
+
+#app-tabs .time-label {
+    color: #cfe;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    min-width: 60px;
+}
+
+#app-tabs .scale-info {
+    font-size: 0.75rem;
+    color: #aef;
+    background: rgba(74, 175, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(74, 175, 255, 0.2);
+    white-space: nowrap;
+}
+
+
+/* --- lil-gui Customization --- */
+.lil-gui { 
+    --width: 280px;
+    --name-width: 45%;
+    --font-size: 13px; /* Larger for better readability */
+    --input-font-size: 13px;
+    --padding: 8px;
+    --spacing: 8px;
+    --widget-height: 28px; /* Taller touch targets */
+}
+
+.lil-gui.root {
+    top: auto !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    max-height: calc(100vh - 100px);
+}
+
+
+/* --- Mobile Responsive Styles --- */
+
+@media (max-width: 768px) {
+    /* Adjust Info Panel */
+    #info {
+        top: 110px; /* Push down further as nav wraps */
+        left: 10px;
+        right: 10px;
+        text-align: center;
+        width: auto;
+    }
+    
+    #info h1 {
+        font-size: 1.2rem;
+    }
+
+    /* Stack the Navigation Bar elements */
+    #app-tabs {
+        padding: 10px;
+        gap: 8px;
+        justify-content: center;
+    }
+    
+    /* Nav links scrollable row */
+    #app-tabs > div:first-child { 
+        width: 100%;
+        justify-content: flex-start; /* Allow scrolling from start */
+        overflow-x: auto;
+        padding-bottom: 5px;
+        margin-bottom: 5px;
+        mask-image: linear-gradient(to right, black 90%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+    }
+
+    #app-tabs a {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+        background: rgba(255,255,255,0.05);
+    }
+    
+    /* Controls row */
+    #app-tabs .controls {
+        width: 100%;
+        justify-content: space-between;
+        background: rgba(0,0,0,0.2);
+        padding: 8px;
+        border-radius: 6px;
+    }
+
+    #app-tabs label {
+        font-size: 0.9rem; /* Bigger for touch */
+    }
+
+    #app-tabs input[type=checkbox] {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Scale Info */
+    #app-tabs .scale-info {
+        display: none; /* Hide non-critical info on mobile to save space */
+    }
+
+    /* Adjust lil-gui for mobile */
+    .lil-gui {
+        --width: 100%; /* Full width controls */
+        --widget-height: 32px; /* Even taller for touch */
+    }
+    
+    .lil-gui.root {
+        right: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 12px 12px 0 0; /* Rounded top */
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+    }
+    
+    .lil-gui > .title {
+        text-align: center;
+        padding: 12px;
+        font-size: 14px;
+    }
 }
