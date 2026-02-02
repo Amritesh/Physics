@@ -6,11 +6,13 @@ import { getProbabilityDensity } from './physics.js';
 
 // --- Main Application ---
 
+const isMobile = window.innerWidth < 768;
+
 const config = {
     n: 2,
     l: 1,
     m: 0,
-    pointCount: 100000,
+    pointCount: isMobile ? 25000 : 100000, // Reduced for mobile
     baseOpacity: 0.3,
     pointSize: 0.15,
     color: '#0088ff',
@@ -67,12 +69,19 @@ function init() {
         if (Math.abs(config.m) > config.l) config.m = Math.sign(config.m) * config.l;
         updateCloud();
     });
+    folderParams.close();
 
     const folderVis = gui.addFolder('Visualization');
     folderVis.add(config, 'pointCount', 1000, 500000, 1000).onFinishChange(reinitBuffer);
     folderVis.addColor(config, 'color').onChange(v => material.color.set(v));
     folderVis.add(config, 'baseOpacity', 0.01, 1).onChange(v => material.opacity = v);
     folderVis.add(config, 'pointSize', 0.01, 1).onChange(v => material.size = v);
+    folderVis.close();
+
+    // Auto-close on mobile
+    if (window.innerWidth < 768) {
+        gui.close();
+    }
 
     window.addEventListener('resize', onWindowResize, false);
 
@@ -193,11 +202,25 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+let frameCount = 0;
 function animate() {
     requestAnimationFrame(animate);
     
+    frameCount++;
+    if (window.APP_STATE?.paused) {
+        orbitControls.update();
+        renderer.render(scene, camera);
+        return;
+    }
+
+    if (window.APP_STATE?.lowQuality && frameCount % 2 !== 0) {
+        return;
+    }
+    
     // Slowly rotate the cloud for effect
-    points.rotation.y += 0.001;
+    // Compensate rotation speed if skipping frames?
+    // Ideally use delta time, but for simplicity we'll just rotate.
+    points.rotation.y += 0.001 * (window.APP_STATE?.lowQuality ? 2 : 1);
     
     orbitControls.update();
     renderer.render(scene, camera);

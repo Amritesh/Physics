@@ -7,8 +7,10 @@ import { getMoleculeGeometry, molecules } from './molecule-data.js';
 import { generateOrbitalPoints, createLabel } from './utils.js';
 
 // Configuration
+const isMobile = window.innerWidth < 768;
+
 const CONFIG = {
-    pointsPerElectron: 2000,
+    pointsPerElectron: isMobile ? 500 : 2000,
     sharpness: 2.0, // Exponent for sampling probability
     pointSize: 0.2,
     opacity: 0.4
