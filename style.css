@@ -1,0 +1,33 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #000;
+    color: white;
+    font-family: sans-serif;
+}
+
+canvas {
+    display: block;
+}
+
+#info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    pointer-events: none;
+    user-select: none;
+}
+
+#info h1 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+#info p {
+    margin: 5px 0 0;
+    font-size: 0.9rem;
+    color: #ccc;
+}
