@@ -17,6 +17,7 @@ const config = {
     pointSize: 0.15,
     color: '#0088ff',
     scale: 5, // Visual scale factor
+    hScale: 1.0, // Planck constant scaling factor
     samplingEfficiency: 1000 // Points to try per frame? Or just generate all at once.
 };
 
@@ -69,6 +70,8 @@ function init() {
         if (Math.abs(config.m) > config.l) config.m = Math.sign(config.m) * config.l;
         updateCloud();
     });
+    // Add Planck constant slider (hScale)
+    folderParams.add(config, 'hScale', 0.1, 5.0, 0.1).name('Planck (h) Scale').onChange(updateCloud);
     folderParams.close();
 
     const folderVis = gui.addFolder('Visualization');
@@ -118,11 +121,13 @@ function generatePoints() {
     // This is much more efficient than rejection sampling for high dimensions/sparse volumes
     
     let x = 1, y = 1, z = 1; // Start somewhere away from 0
-    let currentProb = getProbabilityDensity(x, y, z, config.n, config.l, config.m);
+    let currentProb = getProbabilityDensity(x, y, z, config.n, config.l, config.m, 1, config.hScale);
     
     // Auto-scale step size based on n
-    // Size of orbital is roughly n^2
-    const stepSize = config.n * 1.5; 
+    // Size of orbital is roughly n^2 * h^2
+    // But since we scale coordinates by h^2 effectively in the visual,
+    // the step size needs to scale similarly to explore the larger space.
+    const stepSize = config.n * 1.5 * (config.hScale * config.hScale);
     
     // Burn-in (find a good starting spot)
     for(let i=0; i<1000; i++) {
@@ -134,7 +139,7 @@ function generatePoints() {
         const nextY = y + dy;
         const nextZ = z + dz;
         
-        const nextProb = getProbabilityDensity(nextX, nextY, nextZ, config.n, config.l, config.m);
+        const nextProb = getProbabilityDensity(nextX, nextY, nextZ, config.n, config.l, config.m, 1, config.hScale);
         
         if (nextProb > currentProb || Math.random() < nextProb / currentProb) {
             x = nextX; y = nextY; z = nextZ;
@@ -157,7 +162,7 @@ function generatePoints() {
         const nextY = y + dy;
         const nextZ = z + dz;
         
-        const nextProb = getProbabilityDensity(nextX, nextY, nextZ, config.n, config.l, config.m);
+        const nextProb = getProbabilityDensity(nextX, nextY, nextZ, config.n, config.l, config.m, 1, config.hScale);
         
         // Metropolis Acceptance Criterion
         // If nextProb > currentProb, accept (ratio > 1)
