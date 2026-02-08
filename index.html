@@ -6,8 +6,36 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <title>Electron Cloud Visualization</title>
+    <title>Atomic Stability Simulator</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        #stability-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            pointer-events: none;
+            text-shadow: 0 0 5px black;
+            max-width: 300px;
+        }
+        #stability-status {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .status-stable { color: #4aff4a; }
+        .status-collapse { color: #ff4a4a; }
+        .status-unbound { color: #4a4aff; }
+        
+        #controls-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            pointer-events: auto;
+        }
+    </style>
     <script type="importmap">
         {
             "imports": {
@@ -18,13 +46,19 @@
     </script>
 </head>
 <body>
-    <div id="info">
-        <h1>Hydrogen Atom Electron Cloud</h1>
-        <p>Visualizing probability density |ψ|²</p>
-        <p><a href="grid.html" target="_blank" style="color: #4af; text-decoration: none; border: 1px solid #4af; padding: 5px; border-radius: 4px; pointer-events: auto;">View First 20 Atoms Grid &rarr;</a></p>
-        <p><a href="atoms20.html" target="_blank" style="color: #4af; text-decoration: none; border: 1px solid #4af; padding: 5px; border-radius: 4px; pointer-events: auto;">Atoms (Time Overlay) &rarr;</a></p>
+    <div id="stability-info">
+        <h1>Atomic Stability</h1>
+        <p>Adjust α (Fine-Structure Constant) to see effects on atomic stability.</p>
+        <div id="stability-status" class="status-stable">STABLE</div>
+        <div id="physics-details" style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;">
+            Z = <span id="val-z">1</span><br>
+            α = <span id="val-alpha">0.00729</span> (1/137)<br>
+            Zα = <span id="val-zalpha">0.007</span><br>
+            Binding E ~ <span id="val-e">13.6</span> eV
+        </div>
     </div>
+
     <script src="tabs.js"></script>
-    <script type="module" src="script.js"></script>
+    <script type="module" src="stability.js"></script>
 </body>
 </html>

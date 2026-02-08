@@ -71,7 +71,7 @@ export function legendre(l, m, x) {
 
 // Returns |Psi|^2 density for Standard Quantum Numbers (Complex Eigenstates)
 // Zeff is the effective nuclear charge (default 1 for Hydrogen)
-export function getProbabilityDensity(x, y, z, n, l, m, Zeff = 1) {
+export function getProbabilityDensity(x, y, z, n, l, m, Zeff = 1, hScale = 1) {
     // Convert to spherical
     const r = Math.sqrt(x*x + y*y + z*z);
     
@@ -81,10 +81,22 @@ export function getProbabilityDensity(x, y, z, n, l, m, Zeff = 1) {
     const theta = Math.acos(z / r); // 0 to PI
     
     // Hydrogen-like radial wavefunction with Zeff
-    // rho = 2 * Z * r / n
-    const rho = (2 * Zeff * r) / n;
+    // The Bohr radius a0 is proportional to h^2
+    // So if we scale h by hScale, a0 scales by hScale^2
+    // rho = 2 * Z * r / (n * a0)
+    // So rho_new = rho_old / hScale^2
+    
+    const rho = (2 * Zeff * r) / (n * hScale * hScale);
+    
+    // Normalization prefactor needs to be adjusted for the change in scale
+    // Wavefunction has dimension L^(-3/2).
+    // If r scales by hScale^2, volume scales by hScale^6.
+    // So psi must scale by 1/hScale^3 to keep integral(|psi|^2) = 1
+    // The prefactor contains (Z/n*a0)^3/2.
+    // So we just divide prefactor by hScale^3.
+    
     const prefactor = Math.sqrt(
-        Math.pow(2 * Zeff / n, 3) *
+        Math.pow(2 * Zeff / (n * hScale * hScale), 3) *
         factorial(n - l - 1) /
         (2 * n * factorial(n + l))
     );
